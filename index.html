@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>옥수수 정밀 맞춤형 종합 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #0b111e;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+        .glass-card {
+            background: #131c31;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen p-4 md:p-6">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <div id="special-weather-alert" class="hidden bg-gradient-to-r from-rose-600 to-red-700 border border-rose-500 text-white px-4 py-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-lg shadow-rose-950/40">
+            <div class="flex items-center gap-3">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                </span>
+                <div id="alert-text" class="text-xs md:text-sm">
+                    <span class="font-bold">[기상속보]</span> 실시간 특보 데이터를 확인하는 중입니다...
+                </div>
+            </div>
+            <div class="text-[11px] bg-black/40 px-2 py-1 rounded text-rose-200 font-mono self-end sm:self-auto">
+                LIVE: 기상특보 API
+            </div>
+        </div>
+
+        <header class="glass-card p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl md:text-4xl">🌽</span>
+                <div>
+                    <h1 class="text-lg md:text-2xl font-bold text-white tracking-tight">옥수수 주산지 기상융합 정밀 관리 대시보드</h1>
+                    <p class="text-xs text-slate-400 mt-1 flex items-center gap-3">
+                        <span><i class="fa-solid fa-cloud-sun text-emerald-400 mr-1"></i> 기상청 단기예보 API</span>
+                        <span><i class="fa-solid fa-cloud-bolt text-rose-400 mr-1"></i> 기상청 기상특보 API</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex flex-col text-left sm:text-right text-xs bg-slate-800/40 border border-slate-700/40 p-3 rounded-xl min-w-[180px]">
+                <div><span class="text-slate-400">지역:</span> <span class="text-white font-medium">충북 괴산군</span></div>
+                <div class="mt-1"><span class="text-slate-400">생육 단계:</span> <span class="text-amber-400 font-bold">출수기 (D+55)</span></div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 font-medium block mb-1">오늘 최저 기온</span>
+                            <div class="text-2xl font-bold text-white"><span id="fore-tmn">-.-</span> <span class="text-xs font-normal text-slate-400">°C</span></div>
+                        </div>
+                        <div class="p-3 bg-sky-500/10 text-sky-400 rounded-xl text-lg"><i class="fa-solid fa-temperature-arrow-down"></i></div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 font-medium block mb-1">오늘 최고 기온</span>
+                            <div class="text-2xl font-bold text-white"><span id="fore-tmx">-.-</span> <span class="text-xs font-normal text-slate-400">°C</span></div>
+                        </div>
+                        <div class="p-3 bg-rose-500/10 text-rose-400 rounded-xl text-lg"><i class="fa-solid fa-temperature-arrow-up"></i></div>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400 font-medium block mb-1">최고 강수 확률</span>
+                            <div class="text-2xl font-bold text-white"><span id="fore-pop">-</span> <span class="text-xs font-normal text-slate-400">%</span></div>
+                        </div>
+                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-lg"><i class="fa-solid fa-umbrella"></i></div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-5 rounded-2xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-area text-amber-400"></i> 옥수수 누적 적산온도 (GDD) 예측 차트
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">기준점: 옥수수 성장 하한 기온 (10°C) 누적 수치</p>
+                        </div>
+                        <span class="text-[11px] bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2 py-1 rounded-md font-medium self-start sm:self-auto">예상 수확기: 평년 대비 3일 단축 예상</span>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="gddChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-days text-sky-400"></i> 시비 및 방제 히스토리 스케줄러
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">AI 진단 일자와 실제 비료 살포 이력을 대조하여 효과를 추적합니다.</p>
+                        </div>
+                        <button class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-slate-200 transition-colors"><i class="fa-solid fa-plus mr-1"></i>기록 추가</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-7 gap-1.5 text-center text-xs mt-2">
+                        <div class="text-slate-500 font-semibold py-1">일</div><div class="text-slate-500 font-semibold py-1">월</div><div class="text-slate-500 font-semibold py-1">화</div><div class="text-slate-500 font-semibold py-1">수</div><div class="text-slate-500 font-semibold py-1">목</div><div class="text-slate-500 font-semibold py-1">금</div><div class="text-slate-500 font-semibold py-1">토</div>
+                        
+                        <div class="p-2 text-slate-600 bg-slate-800/10 rounded">31</div>
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">1</div>
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">2</div>
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">3</div>
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">4</div>
+                        
+                        <div class="p-2 bg-rose-500/10 border border-rose-500/20 rounded text-slate-200 relative group cursor-pointer hover:bg-rose-500/20 transition-colors">
+                            <span>5</span>
+                            <div class="w-1.5 h-1.5 bg-rose-500 rounded-full mx-auto mt-0.5"></div>
+                            <div class="hidden group-hover:block absolute p-2.5 z-20 bottom-full left-1/2 transform -translate-x-1/2 bg-slate-900 text-[11px] rounded-lg border border-slate-700 w-36 text-left shadow-2xl transition-all">
+                                <span class="text-rose-400 font-bold">⚠️ AI 진단 결과</span><br>질소 경증 부족 감지됨
+                            </div>
+                        </div>
+
+                        <div class="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-slate-200 relative group cursor-pointer hover:bg-emerald-500/20 transition-colors">
+                            <span>6</span>
+                            <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full mx-auto mt-0.5"></div>
+                            <div class="hidden group-hover:block absolute p-2.5 z-20 bottom-full left-1/2 transform -translate-x-1/2 bg-slate-900 text-[11px] rounded-lg border border-slate-700 w-36 text-left shadow-2xl">
+                                <span class="text-emerald-400 font-bold">🌱 작업 기록</span><br>요소 비료 투입 (5kg)
+                            </div>
+                        </div>
+
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">7</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">8</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">9</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">10</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">11</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">12</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">13</div>
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">14</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">15</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">16</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">17</div>
+                        
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">18</div>
+                        <div class="p-2 bg-slate-800/30 rounded text-slate-400">19</div><div class="p-2 bg-slate-800/30 rounded text-slate-400">20</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="glass-card p-6 rounded-2xl flex flex-col gap-5 h-full justify-between">
+                    <div class="space-y-5">
+                        <div>
+                            <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-robot text-emerald-400"></i> AI 옥수수 질소 결핍 진단
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">옥수수 잎 사진을 등록하면 주산지 기상특보 환경과 연계하여 최적의 영농 가이드를 제공합니다.</p>
+                        </div>
+
+                        <div class="border-2 border-dashed border-slate-600/70 rounded-xl bg-[#090f1c] relative h-52 flex flex-col justify-center items-center overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                            <div id="upload-placeholder" class="flex flex-col items-center justify-center p-4 text-center cursor-pointer w-full h-full">
+                                <i class="fa-solid fa-camera text-3xl text-slate-500 mb-3 group-hover:text-emerald-400 transition-colors"></i>
+                                <span class="text-xs text-slate-300 font-medium">옥수수 개체 사진 업로드</span>
+                                <span class="text-[10px] text-slate-500 mt-1">JPG, PNG 파일 지원</span>
+                            </div>
+                            <img id="image-preview" src="" alt="Preview" class="hidden w-full h-full object-cover">
+                            <div id="change-overlay" class="hidden absolute inset-0 bg-black/75 flex items-center justify-center text-xs text-white opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                                <i class="fa-solid fa-rotate mr-1"></i> 다른 사진으로 변경
+                            </div>
+                            <input type="file" id="file-input" accept="image/*" class="hidden">
+                        </div>
+
+                        <button id="btn-analyze" disabled class="w-full py-3 bg-slate-700 text-slate-400 rounded-xl font-bold text-sm cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                            사진을 먼저 등록해 주세요
+                        </button>
+
+                        <div id="result-box" class="hidden p-4 rounded-xl border flex flex-col gap-3 transition-all duration-300">
+                            <div class="flex items-center gap-2 font-bold text-sm">
+                                <span id="result-icon"></span>
+                                <span id="result-title"></span>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between text-[11px] text-slate-400 mb-1.5">
+                                    <span>잎 내부 측정 질소 포화도</span>
+                                    <span id="result-percent" class="font-bold"></span>
+                                </div>
+                                <div class="w-full bg-slate-900/80 h-2 rounded-full overflow-hidden border border-slate-700/30">
+                                    <div id="result-bar" class="h-full transition-all duration-1000" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <p id="result-desc" class="text-xs text-slate-300 leading-relaxed bg-black/20 p-2.5 rounded-lg border border-slate-800"></p>
+                            
+                            <div class="pt-2.5 border-t border-slate-700/40 text-[11px]">
+                                <span class="font-bold text-amber-400 block mb-1"><i class="fa-solid fa-cloud-bolt text-rose-400 mr-1"></i> 기상특보 융합형 처방 솔루션:</span>
+                                <p id="result-action" class="text-slate-200 font-medium leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex items-center gap-2.5 bg-slate-900/30 p-3 rounded-xl">
+                        <i class="fa-solid fa-circle-info text-sky-400 text-sm"></i>
+                        <p id="bottom-info-text">기상청 동네예보 인프라와 실시간 동기화되어 모니터링 중입니다.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 🌟 공공데이터포털에서 발급받은 [일반 인증키(Encoding)]를 꼭 입력하세요!
+        const AUTH_KEY = 'nBl4xwysQz2ZeMcMrCM91g'; 
+
+        // 충북 괴산군 예보 격자 좌표값 (Nx: 69, Ny: 123)
+        const GOESAN_NX = 69;
+        const GOESAN_NY = 123;
+
+        let isCurrentWeatherDanger = false;
+        let activeWeatherAlertTitle = "";
+        let gddChartInstance = null;
+
+        // 단기예보 요청용 base_date 및 base_time 연산 함수
+        // (단기예보는 0200, 0500, 0800, 1100, 1400, 1700, 2000, 2300 정시 발표됨)
+        function getForecastBaseDateTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            let baseDate = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+            let baseTime = "0500"; // 기본 디폴트
+
+            if (hours < 2) {
+                // 새벽 2시 이전에는 전날 23시 예보를 바라봄
+                const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                baseDate = yesterday.getFullYear() + String(yesterday.getMonth() + 1).padStart(2, '0') + String(yesterday.getDate()).padStart(2, '0');
+                baseTime = "2300";
+            } else if (hours >= 2 && hours < 5)   baseTime = "0200";
+            else if (hours >= 5 && hours < 8)   baseTime = "0500";
+            else if (hours >= 8 && hours < 11)  baseTime = "0800";
+            else if (hours >= 11 && hours < 14) baseTime = "1100";
+            else if (hours >= 14 && hours < 17) baseTime = "1400";
+            else if (hours >= 17 && hours < 20) baseTime = "1700";
+            else if (hours >= 20 && hours < 23) baseTime = "2000";
+            else if (hours >= 23)               baseTime = "2300";
+
+            return { baseDate, baseTime };
+        }
+
+        // 1. [기상청_단기예보 조회서비스] 데이터 연동 함수
+        async function fetchVilageForecast() {
+            if (!AUTH_KEY || AUTH_KEY === 'YOUR_ENCODED_SERVICE_KEY') return;
+
+            const { baseDate, baseTime } = getForecastBaseDateTime();
+
+            try {
+                // 단기예보조회(getVilageFcst) 호출
+                const targetUrl = `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${AUTH_KEY}&pageNo=1&numOfRows=200&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${GOESAN_NX}&ny=${GOESAN_NY}`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                const wrapper = await response.json();
+                const resData = JSON.parse(wrapper.contents);
+                
+                const items = resData.response?.body?.items?.item;
+                
+                if (items) {
+                    // TMN: 일 최저기온, TMX: 일 최고기온, POP: 강수확률
+                    const tmnItem = items.find(i => i.category === 'TMN');
+                    const tmxItem = items.find(i => i.category === 'TMX');
+                    
+                    // 오늘 전체 예보 타임라인 중 가장 높은 강수확률(POP) 산출
+                    const popItems = items.filter(i => i.category === 'POP');
+                    let maxPop = 0;
+                    if (popItems.length > 0) {
+                        maxPop = Math.max(...popItems.map(i => parseInt(i.fcstValue || '0')));
+                    }
+
+                    if (tmnItem) document.getElementById('fore-tmn').innerText = Math.round(parseFloat(tmnItem.fcstValue));
+                    if (tmxItem) document.getElementById('fore-tmx').innerText = Math.round(parseFloat(tmxItem.fcstValue));
+                    document.getElementById('fore-pop').innerText = maxPop;
+                }
+            } catch (e) {
+                console.error("단기예보 API 데이터 호출 실패:", e);
+                document.getElementById('fore-pop').innerText = "오류";
+            }
+        }
+
+        // 2. [기상청_기상특보 조회서비스] 데이터 연동 함수
+        async function checkLiveWeatherAlert() {
+            const alertBanner = document.getElementById('special-weather-alert');
+            const alertText = document.getElementById('alert-text');
+            const bottomInfo = document.getElementById('bottom-info-text');
+
+            if (!AUTH_KEY || AUTH_KEY === 'YOUR_ENCODED_SERVICE_KEY') return;
+
+            try {
+                const targetUrl = `https://apis.data.go.kr/1360000/WthrWrnInfoService/getFeatStatus?serviceKey=${AUTH_KEY}&pageNo=1&numOfRows=20&dataType=JSON`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                const wrapper = await response.json();
+                const resData = JSON.parse(wrapper.contents);
+                
+                const items = resData.response?.body?.items?.item;
+                
+                if (items && items.length > 0) {
+                    // 괴산군 또는 충청북도 특보 필터링
+                    const goesanAlert = items.find(item => item.title.includes('괴산') || item.title.includes('충청북도'));
+                    
+                    if (goesanAlert) {
+                        isCurrentWeatherDanger = true;
+                        activeWeatherAlertTitle = goesanAlert.content;
